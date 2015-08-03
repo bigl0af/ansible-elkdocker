@@ -1,0 +1,59 @@
+   - name: debug
+     debug: var=hostvars[inventory_hostname]
+
+   - name: flush iptables
+     shell: iptables -F
+     changed_when: False
+
+   - name: enable kubernetes and docker
+     service: name={{ item }} state=started enabled=yes
+     with_items:
+      - kube-proxy
+      - kubelet
+      - docker
+
+   - name: put ES config in place
+     template: src=elasticsearch-config.yml dest=/var/lib/docker/elasticsearch.yml backup=no mode=777
+     notify:
+      - restart docker containers
+
+#   - name: enable remote docker apt
+#     template: src=docker-network.j2 dest=/etc/sysconfig/docker backup=yes
+
+#   - name: install docker-py
+#     yum: name={{ item }} state=present
+#     with_items:
+#      - python-pip
+#      - python-docker-py
+      
+#   - name: pip upgrade docker-py
+#     pip: name=docker-py version=1.1.0
+
+   - name: remove existing docker containers
+     docker: name={{ item }} image=elasticsearch state=absent
+     with_items:
+      - logstash1
+      - kibana1
+     when: esrebuild|bool
+ 
+   - docker: name=esnode{{ item }} image=elasticsearch state=absent
+     with_sequence: start=0 count={{ escount }}
+     when: esrebuild|bool
+   
+   - name: create ES persistent storage area
+     file: dest=/var/docker/esnode{{ item }} state=directory mode=0777
+     with_sequence: start=0 count={{ escount }}
+
+   - name: deploy docker containers
+     docker: 
+      ports: "920{{ item }}:9200,930{{ item }}:9300"
+      net: host
+      privileged: yes
+      name: esnode{{ item }}
+      image: "bigl0af/elasticsearch"
+      pull: always
+      env:
+       ES_MIN_MEM: "{{ elk_esmem }}"
+       ES_MAX_MEM: "{{ elk_esmem }}"
+      volumes: "/var/lib/docker/elasticsearch.yml:/etc/elasticsearch/elasticsearch.yml,/var/docker/esnode{{ item }}:/var/lib/elasticsearch"
+     with_sequence: start=0 count={{ escount }}

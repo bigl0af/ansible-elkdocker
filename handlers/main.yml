@@ -1,0 +1,24 @@
+- name: restart docker containers
+  docker: 
+   state: restarted
+   ports: "920{{ item }}:9200,930{{ item }}:9300"
+   net: host
+   privileged: yes
+   name: esnode{{ item }}
+   image: "bigl0af/elasticsearch"
+   pull: always
+   env:
+    ES_MIN_MEM: "{{ elk_esmem }}"
+    ES_MAX_MEM: "{{ elk_esmem }}"
+   volumes: "/var/lib/docker/elasticsearch.yml:/etc/elasticsearch/elasticsearch.yml,/var/docker/esnode{{ item }}:/var/lib/elasticsearch"
+  with_sequence: start=0 count={{ escount }}
+  
+- name: restart logstash container
+  docker: 
+   image: "logstash" 
+   command: "logstash -f /config-dir/logstash.conf"
+   ports: "54328:54328/udp,25826:25826/udp" 
+   net: host
+   name: logstash1
+   volumes: "/var/lib/docker/logstashconf.d/:/config-dir"
+   state: restarted

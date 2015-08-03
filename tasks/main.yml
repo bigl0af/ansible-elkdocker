@@ -1,0 +1,3 @@
+- include: elasticsearch.yml
+- include: logstash.yml
+- include: kibana.yml

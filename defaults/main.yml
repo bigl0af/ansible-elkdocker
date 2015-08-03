@@ -1,0 +1,4 @@
+es_lbhost: "lbhost.my.domain"
+esdata_lbport: "9200"
+elk_esmem: "10g"
+es_unicast_host: "unicasthost.my.domain"

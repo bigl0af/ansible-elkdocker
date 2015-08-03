@@ -1,0 +1,10 @@
+input {
+  collectd {}
+}
+output {
+elasticsearch { 
+	protocol => http
+	index => "logstash-%{+YYYY.MM.dd.HH}"
+	workers => "4"
+	host => "{{ es_lbhost }}" }
+}

@@ -1,0 +1,23 @@
+- name: put logstash configs on docker host
+  file: dest=/var/lib/docker/logstashconf.d state=directory
+  
+- template: src={{ item }}.j2 dest=/var/lib/docker/logstashconf.d/{{ item }} backup=no
+  with_items:
+   - collectd.conf
+   - elasticsearchout.conf
+   - logstash.conf
+  notify:
+   - restart logstash container
+
+- name: install logstash container
+  docker: 
+   image: "logstash" 
+   command: "logstash -f /config-dir/logstash.conf"
+   ports: "54328:54328/udp,25826:25826/udp" 
+   net: host
+   name: logstash1
+   volumes: "/var/lib/docker/logstashconf.d/:/config-dir"
+#   links: "esnode1:es"
+#   env:
+#    ES_HOST: "{{ inventory_hostname }}"
+#    ES_PORT: 9200

@@ -1,0 +1,9 @@
+output {
+elasticsearch { 
+	protocol => http
+	index => "logstash-%{+YYYY.MM.dd.HH}"
+	workers => "4"
+	host => localhost }
+}
+
+

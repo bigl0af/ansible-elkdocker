@@ -1,0 +1,11 @@
+- name: install kibana container
+  docker: 
+   image: "marcbachmann/kibana4" 
+   net: host
+   name: kibana1
+   state: reloaded
+   env:
+    REQUEST_TIMEOUT: 500000000
+    SHARD_TIMEOUT: 120000000000
+    ELASTICSEARCH: "http://{{ es_lbhost }}:{{ esdata_lbport }}"
+
